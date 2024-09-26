@@ -1,0 +1,252 @@
+---------------------------------------------------------------------------------------------------------------------------------------------
+Gloria BENOIT - 05/04/23
+Projet en programmation : Alignement de séquences avec l’algorithme de Needleman & Wunsch
+L3 BI, 22015708
+---------------------------------------------------------------------------------------------------------------------------------------------
+/!\/!\ Il faut parfois relancer le code plusieurs fois, car il peut effectuer des erreurs aléatoires, peut être une erreur de mémoire /!\/!\
+
+
+Contexte
+--------
+L'algorithme  produit est un algorithme d'alignement global en programmation dynamique.
+Il s’agit d’une méthode permettant de déterminer l'alignement de meilleur score (optimal) entre une paire de séquences sans calculer 
+tous les alignements possibles de façon naïve. Le score optimal de l'alignement se trouve dans la case finale de la matrice 
+de score (en bas à droite).
+La pénalité de gap est définie au début de l'algorithme  par la constante GAP, ici déclarée à -10. 
+Les scores de substitution proviennent de la matrice BLOSUM62, définie au début de l'algorithme 
+par la constante BLOSUM62 (https://www.ncbi.nlm.nih.gov/Class/FieldGuide/BLOSUM62.txt).
+Il ne prend pas en compte les extensions de gap.
+On calcule aussi le score d'identité selon le nombre de positions identiques dans l'alignement final. 
+
+Documents
+---------
+Le fichier zip contient les documents suivants:
+    - data (répertoire contenant 17 fichiers fasta à tester).
+    - BLOSUM62.txt (matrice de substitution).
+    - GloriaBENOIT_ProjetAlignement.c (algorithme).
+    - Présentation.pdf (slides).
+    - README (instructions).
+
+Exécution
+---------
+L'algorithme  s'exécute de la manière suivante dans la console de commande :
+	> gcc -Wall GloriaBENOIT_ProjetAlignement.c -o GB_Proj
+	> ./GB_Proj fichier_fasta_1 fichier_fasta_2
+avec fichier_fasta_1 et fichier_fasta_2 les fichiers fasta contenant les deux séquences qu'on veut aligner.
+
+Fonctions
+---------
+L'algorithme est composé des fonctions suivantes:
+    - int sequence_length(char* filename);
+        Cette fonction prend en argument un fichier fasta (chaîne de caractère) et renvoie la taille de sa séquence (entier).
+
+    - char* read_sequence(char* filename);
+        Cette fonction prend en argument un fichier fasta (chaîne de caractère) et renvoie sa séquence (chaîne de caractère).
+
+    - int** read_substitution_matrix(char* filename);
+        Cette fonction prend en argument un fichier qui contient la matrice de substitution (chaîne de caractère),
+        ici BLOSUM62.txt, et renvoie un pointeur vers la matrice de substitution correspondante (pointeur vers une matrice d'entiers).
+
+    - int** initialize_matrix(int n, int m, int value);
+        Cette fonction prend en argument le nombre de lignes, de colonnes et une valeur initiale désirés (entiers)
+        et renvoie une matrice des dimensions données initialisée à la valeur donnée.
+
+    - int convert_aa(char c);
+        Cette fonction prend en argument un acide aminé en code à une lettre (caractère) et renvoie l'indice associé dans la
+        matrice de substitution utilisée (entier).
+
+    - int compute_score(char *a, char *b, int** substitution_matrix);
+        Cette fonction prend en argument deux acides aminés (caractères) et un pointeur vers une matrice de substitution 
+        (pointeur de matrice d'entiers) et renvoie le score de substitution de ces deux acides aminés (entier).
+
+    - int MAX(int x,int y,int z);
+        Cette fonction prend en argument trois valeurs (entiers) et renvoie la plus grande des trois (entier).
+
+    - int calculate_alignement(char* seq1, char* seq2, int** substitution_matrix, int gap_penalty, char** aligned_seq1, char** aligned_seq2);
+        Cette fonction prend en argument deux séquences (chaînes de caractères), un pointeur vers une matrice de substitution
+        (pointeur vers matrice d'entiers), une pénalité de gap (entier) et deux pointeurs vers des séquences alignées 
+        (pointeur vers des chaînes de caractères) et renvoie le score de similarité (entier) des deux alignements (et modifie les séquences 
+        en entrées pour récupérer les séquences alignées).
+
+    - double print_alignment(char* aligned_seq1, char* aligned_seq2){    
+        Cette fonction prend en argument deux séquences alignées (chaînes de caractères), les affiche 100 caractères par 100 caractères et 
+        renvoie le score d'identité de l'alignement (entier).
+
+Résultats
+---------
+Le code contient diverses étapes de vérification qui arrêteront le programme si quelque chose est mal exécuté. 
+La matrice de score n'est pas affichée pour rester lisible, mais il est possible de le faire (le code pour est commenté).
+En plus des instructions pour suivre le programme, on affiche en sortie :
+    - Le score de similarité, celui de l'alignement optimal. Plus il est haut et mieux c'est, on considère qu'un score négatif est mauvais.
+    - L'alignement (100 caractères par 100 caractères si nécessaire).
+    - Le score d'identité, le nombre (ou pourcentage) de lettres identiques et alignées entre deux séquences divisé par le nombre de positions
+    dans l’alignement. Plus il est proche de 1 (100%) et mieux c'est.
+
+Tests
+-----
+**Exemples fabriqués**
+*1) Pour observer un alignement parfait, on utilise :
+    - Exemple1.fasta
+
+    > ./GB_Proj ./data/Exemple1.fasta ./data/Exemple1.fasta
+
+    On attend :
+        Le score de similarité des deux séquences est de 57.
+        On obtient l'alignement suivant :
+        HEAGAWGHE
+        HEAGAWGHE
+        Le score d'identité des deux séquences est de 1.00, on a 100.0% d'identité des deux séquences.
+    On a deux séquences identiques, donc parfaitement alignées. On observe bien un bon score de similarité et un score d'identité de 1.
+
+*2) Pour observer un alignement avec un gap, on utilise :
+    - Exemple2a.fasta
+    - Exemple2b.fasta
+
+    > ./GB_Proj ./data/Exemple2a.fasta ./data/Exemple2b.fasta
+
+    On attend :
+        Le score de similarité des deux séquences est de 40.
+        On obtient l'alignement suivant :
+        PGA-WHEAE
+        PGATWHEAE
+        Le score d'identité des deux séquences est de 0.89, on a 88.9% d'identité des deux séquences.
+    On a deux séquences qui diffèrent uniquement en une position, on a donc bien un seul gap. On observe un bon score de similarité et un
+    bon score d'identité.
+
+*3) Pour observer un alignement avec un gap et des bases qui s'alignent sans être identiques, on utilise :
+    - Exemple3a.fasta
+    - Exemple3b.fasta
+
+    > ./GB_Proj ./data/Exemple3a.fasta ./data/Exemple3b.fasta
+
+    On attend :
+        Le score de similarité des deux séquences est de 10.
+        On obtient l'alignement suivant :
+        HEGWGHE
+        PGAW-HE
+        Le score d'identité des deux séquences est de 0.43, on a 42.9% d'identité des deux séquences.
+    On observe bien un seul gap et un bon score de similarité, cependant le score d'identité est assez bas étant donné que les acides aminés
+    ne correspondent pas. L'alignement s'est donc effectué selon la conservation des acides aminés, dictée par la matrice de substitution 
+    utilisée (ici BLOSUM62).
+
+*4) Pour observer plusieurs gaps dans les deux séquences, on utilise :
+    - Exemple4a.fasta
+    - Exemple4b.fasta
+
+    > ./GB_Proj ./data/Exemple4a.fasta ./data/Exemple4b.fasta
+
+    On attend :
+        Le score de similarité des deux séquences est de -7.
+        On obtient l'alignement suivant :
+        HEAGAWGH-E
+        -P-GAWHEAE
+        Le score d'identité des deux séquences est de 0.40, on a 40.0% d'identité des deux séquences.
+    On observe différents gaps et conservation et on a un bon score d'identité, on a donc un alignement plutôt correct malgré un mauvais 
+    score de similarité. 
+
+*5) Pour observer deux séquences qui ne s'alignent pas bien, on utilise
+    - Exemple5a.fasta
+    - Exemple5b.fasta
+
+    > ./GB_Proj ./data/Exemple5a.fasta ./data/Exemple5b.fasta
+
+    On attend :
+        Le score de similarité des deux séquences est de -64.
+        On obtient l'alignement suivant :
+        -----WL----W
+        NNNNNWLLLLLW
+        Le score d'identité des deux séquences est de 0.25, on a 25.0% d'identité des deux séquences.
+    On observe un grand nombre de gaps et un mauvais score de similarité, on a donc un alignement plutôt mauvais malgré un bon 
+    score d'identité.
+
+*6) Pour observer deux séquences qui ne s'alignent pas du tout, on utilise
+    - Exemple6a.fasta
+    - Exemple6b.fasta
+
+    > ./GB_Proj ./data/Exemple6a.fasta ./data/Exemple6b.fasta
+
+    On attend :
+        Le score de similarité des deux séquences est de -40.
+        On obtient l'alignement suivant :
+        EEEEE--
+        CCCCCCC
+        Le score d'identité des deux séquences est de 0.00, on a 0.0% d'identité des deux séquences.
+    On a créé deux séquences contenant uniquement deux acides aminés qui ont une des plus grandes pénalités de substitution
+    dans la matrice, elle est de -4. Avec une pénalité de gap de -10, on favorise donc ces substitutions peu tolérées. On obtient
+    un alignement qui semble plus ou moins correct, mais on observe des scores d'identité et de similarité très mauvais.
+
+**Exemples concrets**
+*1) Pour observer un alignement parfait sur un exemple concret, on utilise :
+    - rcsb_pdb_1HSI.fasta
+    - rcsb_pdb_3EBZ.fasta
+
+    > ./GB_Proj ./data/rcsb_pdb_1HSI.fasta ./data/rcsb_pdb_3EBZ.fasta
+
+    On attend :
+        Le score de similarité des deux séquences est de 505.
+        On obtient l'alignement suivant :
+        PQFSLWKRPVVTAYIEGQPVEVLLDTGADDSIVAGIELGNNYSPKIVGGIGGFINTKEYKNVEIEVLNKKVRATIMTGDTPINIFGRNILTALGMSLNL
+        PQFSLWKRPVVTAYIEGQPVEVLLDTGADDSIVAGIELGNNYSPKIVGGIGGFINTKEYKNVEIEVLNKKVRATIMTGDTPINIFGRNILTALGMSLNL
+        Le score d'identité des deux séquences est de 1.00, on a 100.0% d'identité des deux séquences.
+    On a deux séquences identiques, donc parfaitement alignées. On observe bien un très bon score de similarité et un score d'identité de 1.
+
+*2) Pour observer un alignement concret sur deux séquences prises au hasard, on utilise :
+    - rcsb_pdb_7FVN.fasta
+    - rcsb_pdb_7XCQ.fasta
+
+    > ./GB_Proj ./data/rcsb_pdb_7FVN.fasta ./data/rcsb_pdb_7XCQ.fasta
+
+    On attend :
+        Le score de similarité des deux séquences est de -114.
+        On obtient l'alignement suivant :
+        MHHHHHHSSGVDLGTENLYFQSMSYDIQAWKKQCEELLNLIFQCEDSEPFRQPVDLLEYPDYR-DIIDTPMDFATVRETLEAGNYE-SPMELCKDVR-LI
+        MVLSEGEWQLVLHVWAKVEADVAGHGQDILIRLFKSHPETLEKFDRFKHLKTEAEMKASEDLKKDGVTVLTALGAILKKKGHHEAELKPLAQSHATKHKI
+        ====================================================================================================
+        FSNSKAYTPSKRSRI-YSMSLR-LSAFFEEHISSVLSDYKSALRFHKRNTITKR
+        PIKYLEFISEAIIHVLHSRHPGDFGADAQGAMNKALELFRKDIAAKYKELGYQG
+        Le score d'identité des deux séquences est de 0.06, on a 6.5% d'identité des deux séquences.
+    On observe un alignement qui a l'air correct, avec peu de gaps. Cependant, on a un mauvais score de similarité et un mauvais
+    score d'identité. Ici, l'alignement s'est fait presque uniquement sur des conservations.
+
+*3) On prend maintenant deux séquences qu'on attend très différentes puisque venant d'organismes différents,
+    et n'étant pas le même type de protéine
+    - rcsb_pdb_7XCB.fasta
+    - rcsb_pdb_7XDV.fasta
+
+    > ./GB_Proj ./data/rcsb_pdb_7XCB.fasta ./data/rcsb_pdb_7XDV.fasta
+
+    On attend :
+        Le score de similarité des deux séquences est de -1616.
+        On obtient l'alignement suivant :
+        C-ST------TWG---I-R-----D----T-NY-----L-IENL-K----D-DP-PSKCSCS-GN------V----TSC--LC-L------S-VP-TDD-
+        MGSSHHHHHHSQGSSNLCRHFSFAEIKAATKNFDESRVLGVGGFGKVYRGEIDGGTTKVAIRRGNPMSEQGVHEFQTEIEMLSKLRHRHLVSLIGYCEEN
+        ====================================================================================================
+        C------------T-------T--PC--Y--R-E---GL---LQ-L-TNA--T---Q--KS-R-LLP---V-----F----------H-RVKRIVE--V-
+        CEMILVYDYMAHGTMREHLYKTQNPSLPWKQRLEICIGAARGLHYLHTGAKHTIIHRDVKTTNILLDEKWVAKVSDFGLSKTGPTLDHTHVSTVVKGSFG
+        ====================================================================================================
+        -L-----KN--IT--CP--SF------S-CEKPC-NQTMAGN--TLS----FL-KS--L-------L-G--T---FQK-TE--M-----Q---R------
+        YLDPEYFRRQQLTEKSDVYSFGVVLFEALCARPALNPTLAKEQVSLAEWAPYCYKKGMLDQIVDPYLKGKITPECFKKFAETAMKCVLDQGIERPSMGDV
+        ====================================================================================================
+        --------Q----
+        LWNLEFALQLQES
+        Le score d'identité des deux séquences est de 0.19, on a 18.5% d'identité des deux séquences.
+    On observe un alignement avec de nombreux gaps, et un score de similarité très mauvais. Le score d'identité est cependant meilleur 
+    que dans l'exemple précédent. On a bien deux séquences qui s'alignent mal, étant donné qu'elles sont très différentes.
+
+Biais
+-----
+Dans l'algorithme, on choisi le premier chemin qui marche. Quand on remonte les cases, on commence par regarder s'il n'y a pas un gap 
+dans la séquence 1, c'est pourquoi on aura plus souvent des gaps dans la séquence 1, puisque c'est le scénario choisi en cas d'égalité.
+Malgré un bon alignement visuel, il faut quand même prendre en compte le score de similarité (Exemple concret 2).
+Pour améliorer nos alignements, il faut choisir les matrices de substitution adaptées. Ainsi, pour des séquences fortement conservées,
+on préfère BLOSUM80 alors que pour des séquences très divergentes, on préfère BLOSUM45. Il faut aussi tester différentes valeurs de gaps. 
+Ici, la pénalité de gap étant assez élevée, on force les alignements dès que possible (Exercice fabriqué 6).
+Etant donné que l'algorithme est global, deux séquences alignées auront de forcément des gaps si elles sont de tailles différentes.
+
+Ouverture
+---------
+Pour améliorer l'algorithme, il faudra essayer de modifier la fonction read_substitution_matrix pour qu'elle puisse lire n'importe quelle
+BLOSUM. On pourra aussi améliorer la fonction read_sequence pour qu'elle puisse lire les fichiers fasta contenant plus d'une chaîne ou
+séquence. On pourrai aussi implémenter un paramètre, spécifié par l'utilisateur, qui indique si l'ont veut un alignement global ou local. 
+Il faudrait donc coder un algorithme d'alignement local tel l'algorithme de Smith-Waterman, et modifier les fonctions pour spécifiant
+ce nouveau paramètre en argument. 

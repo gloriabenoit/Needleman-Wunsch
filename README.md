@@ -18,7 +18,7 @@ git clone https://github.com/gloriabenoit/Needleman-Wunsch.git
 cd Needleman-Wunsch
 ```
 
-## Usage
+## Usage (command line interface)
 
 ```bash
 gcc -Wall GloriaBENOIT_ProjetAlignement.c -o GB_Proj
